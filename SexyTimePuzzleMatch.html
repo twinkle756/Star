@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sexy Time Puzzle Match</title>
+    <style>
+        /* CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f8f8;
+            color: #333;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ff69b4;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(8, 80px);
+            grid-gap: 8px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .tile {
+            width: 80px;
+            height: 80px;
+            background-color: #ffcccb;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .tile:hover {
+            transform: scale(1.1);
+            background-color: #ffeb3b;
+        }
+
+        .tile.selected {
+            background-color: #ff80b3;
+        }
+
+        .tile.matched {
+            background-color: #4caf50;
+            transform: scale(1.2);
+        }
+
+        #score {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff69b4;
+        }
+
+        #score p {
+            margin: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- HTML -->
+    <h1>Sexy Time Puzzle Match</h1>
+    <div id="gameBoard"></div>
+    <div id="score">
+        <p>Score: <span id="scoreValue">0</span></p>
+    </div>
+
+    <script>
+        // JavaScript
+        const gameBoard = document.getElementById("gameBoard");
+        const scoreElement = document.getElementById("scoreValue");
+        const boardSize = 8;
+        const tileTypes = ['1Pic.png', '2Pic.png', '3Pic.png', '4Pic.png', '5Pic.png']; // Image file names
+        let board = [];
+        let score = 0;
+        let selectedTile = null;
+        let gameInProgress = true;
+
+        const matchSound = new Audio('https://www.soundjay.com/button/beep-07.wav'); // Match sound
+        const swapSound = new Audio('https://www.soundjay.com/button/button-3.wav'); // Swap sound
+        const errorSound = new Audio('https://www.soundjay.com/button/button-10.wav'); // Error sound
+
+        // Initialize the game board
+        function createBoard() {
+            for (let row = 0; row < boardSize; row++) {
+                board.push([]);
+                for (let col = 0; col < boardSize; col++) {
+                    const tile = document.createElement("div");
+                    tile.classList.add("tile");
+
+                    // Set the background image of the tile
+                    const img = document.createElement("img");
+                    img.src = tileTypes[Math.floor(Math.random() * tileTypes.length)];
+                    img.alt = "tile image";
+                    img.style.width = "60px";
+                    img.style.height = "60px";
+                    tile.appendChild(img);
+
+                    tile.setAttribute('data-row', row);
+                    tile.setAttribute('data-col', col);
+                    tile.addEventListener("click", () => handleTileClick(row, col));
+                    gameBoard.appendChild(tile);
+                    board[row].push(tile);
+                }
+            }
+        }
+
+        // Handle tile click and swapping logic
+        function handleTileClick(row, col) {
+            if (!gameInProgress) return;
+
+            if (selectedTile) {
+                const selectedRow = selectedTile.getAttribute('data-row');
+                const selectedCol = selectedTile.getAttribute('data-col');
+
+                // Swap tiles if they're adjacent
+                if (Math.abs(selectedRow - row) <= 1 && Math.abs(selectedCol - col) <= 1) {
+                    swapTiles(row, col, selectedRow, selectedCol);
+                    selectedTile = null;
+                } else {
+                    selectedTile.classList.remove("selected");
+                    selectedTile = board[row][col];
+                    selectedTile.classList.add("selected");
+                }
+            } else {
+                selectedTile = board[row][col];
+                selectedTile.classList.add("selected");
+            }
+        }
+
+        // Swap tiles
+        function swapTiles(row1, col1, row2, col2) {
+            const tile1 = board[row1][col1];
+            const tile2 = board[row2][col2];
+
+            // Play swap sound
+            swapSound.play();
+
+            // Swap the images
+            const img1 = tile1.querySelector("img");
+            const img2 = tile2.querySelector("img");
+
+            const tempSrc = img1.src;
+            img1.src = img2.src;
+            img2.src = tempSrc;
+
+            // Check for matches
+            if (checkMatches()) {
+                updateScore();
+                applyGravity();
+            } else {
+                // Revert swap if no match
+                img1.src = img2.src;
+                img2.src = tempSrc;
+                errorSound.play(); // Play error sound
+            }
+        }
+
+        // Check for matches horizontally and vertically
+        function checkMatches() {
+            let foundMatch = false;
+
+            // Check horizontal matches
+            for (let row = 0; row < boardSize; row++) {
+                for (let col = 0; col < boardSize - 2; col++) {
+                    const img1 = board[row][col].querySelector("img").src;
+                    const img2 = board[row][col + 1].querySelector("img").src;
+                    const img3 = board[row][col + 2].querySelector("img").src;
+
+                    if (img1 === img2 && img2 === img3) {
+                        foundMatch = true;
+                        markMatched(row, col, 'horizontal');
+                    }
+                }
+            }
+
+            // Check vertical matches
+            for (let col = 0; col < boardSize; col++) {
+                for (let row = 0; row < boardSize - 2; row++) {
+                    const img1 = board[row][col].querySelector("img").src;
+                    const img2 = board[row + 1][col].querySelector("img").src;
+                    const img3 = board[row + 2][col].querySelector("img").src;
+
+                    if (img1 === img2 && img2 === img3) {
+                        foundMatch = true;
+                        markMatched(row, col, 'vertical');
+                    }
+                }
+            }
+
+            return foundMatch;
+        }
+
+        // Mark tiles as matched
+        function markMatched(row, col, direction) {
+            if (direction === 'horizontal') {
+                board[row][col].classList.add('matched');
+                board[row][col + 1].classList.add('matched');
+                board[row][col + 2].classList.add('matched');
+            } else {
+                board[row][col].classList.add('matched');
+                board[row + 1][col].classList.add('matched');
+                board[row + 2][col].classList.add('matched');
+            }
+
+            // Play match sound
+            matchSound.play();
+
+            // Remove matched tiles after animation
+            setTimeout(() => {
+                for (let i = 0; i < 3; i++) {
+                    if (direction === 'horizontal') {
+                        board[row][col + i].querySelector("img").src = tileTypes[Math.floor(Math.random() * tileTypes.length)];
+                        board[row][col + i].classList.remove('matched');
+                    } else {
+                        board[row + i][col].querySelector("img").src = tileTypes[Math.floor(Math.random() * tileTypes.length)];
+                        board[row + i][col].classList.remove('matched');
+                    }
+                }
+            }, 300);
+        }
+
+        // Apply gravity after tiles are removed
+        function applyGravity() {
+            for (let col = 0; col < boardSize; col++) {
+                for (let row = boardSize - 1; row >= 0; row--) {
+                    if (board[row][col].querySelector("img").src === '') {
+                        let newRow = row - 1;
+                        while (newRow >= 0 && board[newRow][col].querySelector("img").src === '') {
+                            newRow--;
+                        }
+                        if (newRow >= 0) {
+                            board[row][col].querySelector("img").src = board[newRow][col].querySelector("img").src;
+                            board[newRow][col].querySelector("img").src = '';
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update the score
+        function updateScore() {
+            score += 10;
+            scoreElement.textContent = score;
+        }
+
+        // Initialize the game
+        createBoard();
+    </script>
+
+</body>
+</html>
