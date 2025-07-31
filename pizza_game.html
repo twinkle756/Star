@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>Pizza Panic!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(45deg, #FFE66D, #FF6B6B);
+        }
+
+        .game-header {
+            height: 15%;
+            background: linear-gradient(90deg, #FF4757, #FF3742);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .score-display {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .timer {
+            color: #FFE66D;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-board {
+            height: 60%;
+            position: relative;
+            background: 
+                repeating-linear-gradient(45deg, #55A3FF 0px, #55A3FF 20px, #4ECDC4 20px, #4ECDC4 40px);
+            overflow: hidden;
+        }
+
+        .pizza-shop {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(145deg, #8B4513, #A0522D);
+            border-radius: 15px;
+            border: 4px solid #654321;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+
+        .customer {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            animation: bounce 2s infinite;
+        }
+
+        .customer.angry {
+            background: linear-gradient(145deg, #FF4757, #FF3742);
+            transform: scale(1.2);
+        }
+
+        .customer.happy {
+            background: linear-gradient(145deg, #2ED573, #20BF6B);
+        }
+
+        .customer.neutral {
+            background: linear-gradient(145deg, #FFA502, #FF9F43);
+        }
+
+        .delivery-guy {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #5352ED, #3742FA);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+            transition: all 0.5s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
+        .pizza {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #FF6348, #E55039);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .ui-panel {
+            height: 25%;
+            background: linear-gradient(90deg, #2F3542, #40739E);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            gap: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: space-around;
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 50px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .hire-btn {
+            background: linear-gradient(145deg, #2ED573, #20BF6B);
+        }
+
+        .hire-btn:active {
+            transform: scale(0.95);
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(145deg, #FFA502, #FF9F43);
+        }
+
+        .upgrade-btn:active {
+            transform: scale(0.95);
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .panic-btn {
+            background: linear-gradient(145deg, #FF4757, #FF3742);
+            animation: pulse 1s infinite;
+        }
+
+        .panic-btn:active {
+            transform: scale(0.95);
+            animation: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .floating-text {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1.5s ease-out forwards;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shaking {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: #FFE66D;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-display">
+                💰 $<span id="money">100</span> | 🍕 <span id="pizzas">0</span>
+            </div>
+            <div class="timer">⏰ <span id="time">60</span>s</div>
+        </div>
+        
+        <div class="game-board" id="gameBoard">
+            <div class="pizza-shop">🏪</div>
+            <div class="combo-display" id="comboDisplay" style="display: none;">
+                COMBO x<span id="comboCount">1</span>! 🔥
+            </div>
+        </div>
+        
+        <div class="ui-panel">
+            <div class="action-buttons">
+                <button class="action-btn hire-btn" id="hireBtn">
+                    👨‍🍳 Hire<br>($50)
+                </button>
+                <button class="action-btn upgrade-btn" id="upgradeBtn">
+                    ⚡ Speed Up<br>($75)
+                </button>
+                <button class="action-btn panic-btn" id="panicBtn">
+                    🚨 PIZZA RUSH!<br>($25)
+                </button>
+            </div>
+            <div class="stats">
+                <span>Drivers: <span id="driverCount">1</span></span>
+                <span>Speed: <span id="speed">Normal</span></span>
+                <span>Rush Mode: <span id="rushMode">OFF</span></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PizzaPanicGame {
+            constructor() {
+                this.money = 100;
+                this.pizzas = 0;
+                this.drivers = 1;
+                this.speed = 1;
+                this.timeLeft = 60;
+                this.customers = [];
+                this.deliveryGuys = [];
+                this.pizzaObjects = [];
+                this.combo = 0;
+                this.rushMode = false;
+                this.gameRunning = true;
+                
+                this.sounds = {
+                    click: this.createSound(800, 0.1, 'square'),
+                    delivery: this.createSound(600, 0.2, 'sine'),
+                    angry: this.createSound(200, 0.3, 'sawtooth'),
+                    money: this.createSound(1000, 0.15, 'triangle'),
+                    rush: this.createSound(400, 0.5, 'square'),
+                    combo: this.createSound(1200, 0.2, 'sine')
+                };
+                
+                this.init();
+            }
+            
+            createSound(frequency, duration, type = 'sine') {
+                return () => {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                    oscillator.type = type;
+                    
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + duration);
+                };
+            }
+            
+            init() {
+                this.gameBoard = document.getElementById('gameBoard');
+                this.setupEventListeners();
+                this.spawnInitialDriver();
+                this.startGameLoop();
+                this.startTimer();
+            }
+            
+            setupEventListeners() {
+                document.getElementById('hireBtn').addEventListener('click', () => this.hireDriver());
+                document.getElementById('upgradeBtn').addEventListener('click', () => this.upgradeSpeed());
+                document.getElementById('panicBtn').addEventListener('click', () => this.activateRush());
+                
+                this.gameBoard.addEventListener('click', (e) => this.handleBoardClick(e));
+            }
+            
+            spawnInitialDriver() {
+                this.spawnDeliveryGuy();
+            }
+            
+            spawnCustomer() {
+                if (this.customers.length >= 8) return;
+                
+                const customer = {
+                    id: Date.now() + Math.random(),
+                    x: Math.random() * (this.gameBoard.offsetWidth - 50),
+                    y: Math.random() * (this.gameBoard.offsetHeight - 50),
+                    patience: 100,
+                    type: Math.random() > 0.7 ? 'angry' : (Math.random() > 0.4 ? 'neutral' : 'happy'),
+                    element: null
+                };
+                
+                const customerEl = document.createElement('div');
+                customerEl.className = `customer ${customer.type}`;
+                customerEl.style.left = customer.x + 'px';
+                customerEl.style.top = customer.y + 'px';
+                customerEl.innerHTML = customer.type === 'angry' ? '😡' : (customer.type === 'happy' ? '😊' : '😐');
+                customerEl.dataset.id = customer.id;
+                
+                customer.element = customerEl;
+                this.gameBoard.appendChild(customerEl);
+                this.customers.push(customer);
+            }
+            
+            spawnDeliveryGuy() {
+                const driver = {
+                    id: Date.now() + Math.random(),
+                    x: this.gameBoard.offsetWidth / 2,
+                    y: this.gameBoard.offsetHeight / 2,
+                    carrying: false,
+                    target: null,
+                    element: null
+                };
+                
+                const driverEl = document.createElement('div');
+                driverEl.className = 'delivery-guy';
+                driverEl.style.left = driver.x + 'px';
+                driverEl.style.top = driver.y + 'px';
+                driverEl.innerHTML = '🏃‍♂️';
+                driverEl.dataset.id = driver.id;
+                
+                driver.element = driverEl;
+                this.gameBoard.appendChild(driverEl);
+                this.deliveryGuys.push(driver);
+            }
+            
+            handleBoardClick(e) {
+                if (e.target.classList.contains('customer')) {
+                    this.assignDelivery(e.target.dataset.id);
+                    this.sounds.click();
+                }
+            }
+            
+            assignDelivery(customerId) {
+                const customer = this.customers.find(c => c.id == customerId);
+                const availableDriver = this.deliveryGuys.find(d => !d.target);
+                
+                if (customer && availableDriver) {
+                    availableDriver.target = customer;
+                    this.createPizza(availableDriver);
+                }
+            }
+            
+            createPizza(driver) {
+                const pizza = {
+                    id: Date.now() + Math.random(),
+                    x: driver.x,
+                    y: driver.y,
+                    element: null
+                };
+                
+                const pizzaEl = document.createElement('div');
+                pizzaEl.className = 'pizza';
+                pizzaEl.style.left = pizza.x + 'px';
+                pizzaEl.style.top = pizza.y + 'px';
+                pizzaEl.innerHTML = '🍕';
+                
+                pizza.element = pizzaEl;
+                this.gameBoard.appendChild(pizzaEl);
+                this.pizzaObjects.push(pizza);
+                
+                driver.carrying = pizza;
+                this.pizzas++;
+                this.updateUI();
+            }
+            
+            moveDrivers() {
+                this.deliveryGuys.forEach(driver => {
+                    if (driver.target && driver.carrying) {
+                        const dx = driver.target.x - driver.x;
+                        const dy = driver.target.y - driver.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 10) {
+                            const moveSpeed = (this.rushMode ? 4 : 2) * this.speed;
+                            driver.x += (dx / distance) * moveSpeed;
+                            driver.y += (dy / distance) * moveSpeed;
+                            
+                            driver.element.style.left = driver.x + 'px';
+                            driver.element.style.top = driver.y + 'px';
+                            
+                            if (driver.carrying) {
+                                driver.carrying.x = driver.x;
+                                driver.carrying.y = driver.y;
+                                driver.carrying.element.style.left = driver.x + 'px';
+                                driver.carrying.element.style.top = driver.y + 'px';
+                            }
+                        } else {
+                            this.deliverPizza(driver);
+                        }
+                    }
+                });
+            }
+            
+            deliverPizza(driver) {
+                const customer = driver.target;
+                const pizza = driver.carrying;
+                
+                let earnings = 20;
+                if (customer.type === 'happy') earnings = 30;
+                if (customer.type === 'angry') earnings = 10;
+                
+                this.combo++;
+                if (this.combo > 1) {
+                    earnings *= this.combo;
+                    this.showCombo();
+                    this.sounds.combo();
+                }
+                
+                this.money += earnings;
+                this.showFloatingText(customer.x, customer.y, `+$${earnings}`, '#2ED573');
+                
+                // Remove customer and pizza
+                customer.element.remove();
+                pizza.element.remove();
+                
+                this.customers = this.customers.filter(c => c.id !== customer.id);
+                this.pizzaObjects = this.pizzaObjects.filter(p => p.id !== pizza.id);
+                
+                // Reset driver
+                driver.target = null;
+                driver.carrying = false;
+                
+                this.sounds.delivery();
+                this.updateUI();
+                
+                setTimeout(() => {
+                    this.combo = 0;
+                    this.hideCombo();
+                }, 2000);
+            }
+            
+            showCombo() {
+                const comboDisplay = document.getElementById('comboDisplay');
+                document.getElementById('comboCount').textContent = this.combo;
+                comboDisplay.style.display = 'block';
+            }
+            
+            hideCombo() {
+                document.getElementById('comboDisplay').style.display = 'none';
+            }
+            
+            updateCustomerPatience() {
+                this.customers.forEach(customer => {
+                    customer.patience -= (this.rushMode ? 0.5 : 1);
+                    
+                    if (customer.patience <= 0) {
+                        this.showFloatingText(customer.x, customer.y, 'ANGRY!', '#FF4757');
+                        customer.element.classList.add('shaking');
+                        this.sounds.angry();
+                        
+                        setTimeout(() => {
+                            customer.element.remove();
+                            this.customers = this.customers.filter(c => c.id !== customer.id);
+                        }, 500);
+                    } else if (customer.patience < 30) {
+                        customer.element.classList.add('shaking');
+                    }
+                });
+            }
+            
+            hireDriver() {
+                if (this.money >= 50 && this.deliveryGuys.length < 6) {
+                    this.money -= 50;
+                    this.drivers++;
+                    this.spawnDeliveryGuy();
+                    this.sounds.money();
+                    this.updateUI();
+                }
+            }
+            
+            upgradeSpeed() {
+                if (this.money >= 75) {
+                    this.money -= 75;
+                    this.speed += 0.5;
+                    this.sounds.money();
+                    this.updateUI();
+                }
+            }
+            
+            activateRush() {
+                if (this.money >= 25 && !this.rushMode) {
+                    this.money -= 25;
+                    this.rushMode = true;
+                    this.sounds.rush();
+                    
+                    setTimeout(() => {
+                        this.rushMode = false;
+                        this.updateUI();
+                    }, 10000);
+                    
+                    this.updateUI();
+                }
+            }
+            
+            showFloatingText(x, y, text, color) {
+                const floatingText = document.createElement('div');
+                floatingText.className = 'floating-text';
+                floatingText.style.left = x + 'px';
+                floatingText.style.top = y + 'px';
+                floatingText.style.color = color;
+                floatingText.textContent = text;
+                
+                this.gameBoard.appendChild(floatingText);
+                
+                setTimeout(() => {
+                    floatingText.remove();
+                }, 1500);
+            }
+            
+            updateUI() {
+                document.getElementById('money').textContent = this.money;
+                document.getElementById('pizzas').textContent = this.pizzas;
+                document.getElementById('driverCount').textContent = this.drivers;
+                document.getElementById('speed').textContent = this.speed === 1 ? 'Normal' : `${this.speed}x`;
+                document.getElementById('rushMode').textContent = this.rushMode ? 'ON 🔥' : 'OFF';
+            }
+            
+            startTimer() {
+                const timerInterval = setInterval(() => {
+                    this.timeLeft--;
+                    document.getElementById('time').textContent = this.timeLeft;
+                    
+                    if (this.timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        this.endGame();
+                    }
+                }, 1000);
+            }
+            
+            startGameLoop() {
+                const gameLoop = setInterval(() => {
+                    if (!this.gameRunning) {
+                        clearInterval(gameLoop);
+                        return;
+                    }
+                    
+                    if (Math.random() < 0.3) {
+                        this.spawnCustomer();
+                    }
+                    
+                    this.moveDrivers();
+                    this.updateCustomerPatience();
+                }, 100);
+            }
+            
+            endGame() {
+                this.gameRunning = false;
+                const finalScore = this.money + (this.pizzas * 5);
+                
+                setTimeout(() => {
+                    alert(`🍕 PIZZA PANIC COMPLETE! 🍕\n\nFinal Score: $${finalScore}\nPizzas Delivered: ${this.pizzas}\nDrivers Hired: ${this.drivers}\n\n${finalScore > 500 ? 'PIZZA MASTER! 👑' : finalScore > 300 ? 'Great Job! 🌟' : 'Keep Practicing! 💪'}`);
+                    location.reload();
+                }, 500);
+            }
+        }
+        
+        // Start the game when page loads
+        window.addEventListener('load', () => {
+            new PizzaPanicGame();
+        });
+    </script>
+</body>
+</html>
