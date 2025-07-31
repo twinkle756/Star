@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Pizza Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            touch-action: manipulation;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        .game-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: 
+                radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+                linear-gradient(135deg, #1a1a2e, #16213e);
+            background-size: 200px 100px;
+            animation: starfield 20s linear infinite;
+        }
+
+        @keyframes starfield {
+            0% { background-position: 0 0; }
+            100% { background-position: -200px -100px; }
+        }
+
+        .player {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border-radius: 50% 50% 50% 20%;
+            border: 3px solid #fff;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+
+        .player::before {
+            content: '🚀';
+            position: absolute;
+            font-size: 30px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .enemy {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #a55eea, #fd79a8);
+            border-radius: 20% 50% 50% 50%;
+            border: 2px solid #fff;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        .enemy::before {
+            content: '👾';
+            position: absolute;
+            font-size: 20px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .pizza {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(45deg, #feca57, #ff9ff3);
+            border-radius: 50%;
+            border: 2px solid #fff;
+            animation: spin 3s linear infinite;
+        }
+
+        .pizza::before {
+            content: '🍕';
+            position: absolute;
+            font-size: 20px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            width: 180px;
+            height: 120px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .control-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.95);
+        }
+
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #feca57;
+            z-index: 200;
+            max-width: 80%;
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #feca57, #ff9ff3);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        .explosion {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ff6b6b, #feca57, transparent);
+            border-radius: 50%;
+            animation: explode 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes explode {
+            0% { 
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% { 
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        .power-up {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
+            border-radius: 50%;
+            border: 2px solid #fff;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .power-up::before {
+            content: '⚡';
+            position: absolute;
+            font-size: 16px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .sound-toggle {
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div>Score: <span id="score">0</span></div>
+            <div>Lives: <span id="lives">3</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <button class="sound-toggle" id="soundToggle">🔊</button>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="player" id="player"></div>
+        </div>
+
+        <div class="controls">
+            <div class="control-btn up" id="upBtn">↑</div>
+            <div class="control-btn left" id="leftBtn">←</div>
+            <div class="control-btn down" id="downBtn">↓</div>
+            <div class="control-btn right" id="rightBtn">→</div>
+        </div>
+
+        <div class="message" id="gameMessage">
+            <h2>🚀 Space Pizza Adventure! 🍕</h2>
+            <p>Captain Pizza needs your help! Collect cosmic pizzas while avoiding alien enemies. Watch out for power-ups that give you temporary invincibility!</p>
+            <p><strong>Controls:</strong> Use the arrow buttons or swipe to move</p>
+            <button class="start-btn" onclick="startGame()">Start Adventure!</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            running: false,
+            score: 0,
+            lives: 3,
+            level: 1,
+            playerX: 50,
+            playerY: 50,
+            enemies: [],
+            pizzas: [],
+            powerUps: [],
+            invincible: false,
+            soundEnabled: true
+        };
+
+        // Audio context for sound effects
+        let audioContext = null;
+
+        // Initialize audio
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Sound effect functions
+        function playSound(frequency, duration, type = 'sine') {
+            if (!gameState.soundEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playCollectSound() {
+            playSound(800, 0.2);
+            setTimeout(() => playSound(1000, 0.15), 100);
+        }
+
+        function playHitSound() {
+            playSound(200, 0.3, 'sawtooth');
+        }
+
+        function playPowerUpSound() {
+            for(let i = 0; i < 5; i++) {
+                setTimeout(() => playSound(400 + i * 200, 0.1), i * 50);
+            }
+        }
+
+        function playLevelUpSound() {
+            for(let i = 0; i < 8; i++) {
+                setTimeout(() => playSound(300 + i * 100, 0.15), i * 100);
+            }
+        }
+
+        // DOM elements
+        const player = document.getElementById('player');
+        const gameArea = document.getElementById('gameArea');
+        const gameMessage = document.getElementById('gameMessage');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const levelEl = document.getElementById('level');
+        const soundToggle = document.getElementById('soundToggle');
+
+        // Game functions
+        function startGame() {
+            initAudio();
+            gameState.running = true;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.level = 1;
+            gameState.enemies = [];
+            gameState.pizzas = [];
+            gameState.powerUps = [];
+            gameState.invincible = false;
+            
+            gameMessage.style.display = 'none';
+            updateUI();
+            gameLoop();
+            spawnLoop();
+        }
+
+        function updateUI() {
+            scoreEl.textContent = gameState.score;
+            livesEl.textContent = gameState.lives;
+            levelEl.textContent = gameState.level;
+        }
+
+        function movePlayer(dx, dy) {
+            if (!gameState.running) return;
+            
+            gameState.playerX = Math.max(5, Math.min(95, gameState.playerX + dx));
+            gameState.playerY = Math.max(5, Math.min(95, gameState.playerY + dy));
+            
+            player.style.left = gameState.playerX + '%';
+            player.style.top = gameState.playerY + '%';
+        }
+
+        function spawnEnemy() {
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+            
+            switch(side) {
+                case 0: x = Math.random() * 100; y = -5; break;
+                case 1: x = 105; y = Math.random() * 100; break;
+                case 2: x = Math.random() * 100; y = 105; break;
+                case 3: x = -5; y = Math.random() * 100; break;
+            }
+            
+            enemy.style.left = x + '%';
+            enemy.style.top = y + '%';
+            
+            gameArea.appendChild(enemy);
+            gameState.enemies.push({element: enemy, x, y, dx: (gameState.playerX - x) * 0.01, dy: (gameState.playerY - y) * 0.01});
+        }
+
+        function spawnPizza() {
+            const pizza = document.createElement('div');
+            pizza.className = 'pizza';
+            
+            const x = Math.random() * 90 + 5;
+            const y = Math.random() * 90 + 5;
+            
+            pizza.style.left = x + '%';
+            pizza.style.top = y + '%';
+            
+            gameArea.appendChild(pizza);
+            gameState.pizzas.push({element: pizza, x, y});
+        }
+
+        function spawnPowerUp() {
+            if (Math.random() < 0.3) {
+                const powerUp = document.createElement('div');
+                powerUp.className = 'power-up';
+                
+                const x = Math.random() * 90 + 5;
+                const y = Math.random() * 90 + 5;
+                
+                powerUp.style.left = x + '%';
+                powerUp.style.top = y + '%';
+                
+                gameArea.appendChild(powerUp);
+                gameState.powerUps.push({element: powerUp, x, y});
+            }
+        }
+
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = x + '%';
+            explosion.style.top = y + '%';
+            gameArea.appendChild(explosion);
+            
+            setTimeout(() => {
+                if (explosion.parentNode) {
+                    explosion.parentNode.removeChild(explosion);
+                }
+            }, 500);
+        }
+
+        function checkCollisions() {
+            // Check pizza collisions
+            gameState.pizzas = gameState.pizzas.filter(pizza => {
+                const dx = pizza.x - gameState.playerX;
+                const dy = pizza.y - gameState.playerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 8) {
+                    pizza.element.remove();
+                    gameState.score += 10;
+                    playCollectSound();
+                    
+                    if (gameState.score % 100 === 0) {
+                        gameState.level++;
+                        playLevelUpSound();
+                    }
+                    
+                    return false;
+                }
+                return true;
+            });
+
+            // Check power-up collisions
+            gameState.powerUps = gameState.powerUps.filter(powerUp => {
+                const dx = powerUp.x - gameState.playerX;
+                const dy = powerUp.y - gameState.playerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 8) {
+                    powerUp.element.remove();
+                    gameState.invincible = true;
+                    player.style.boxShadow = '0 0 30px rgba(0, 210, 211, 0.8)';
+                    playPowerUpSound();
+                    
+                    setTimeout(() => {
+                        gameState.invincible = false;
+                        player.style.boxShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
+                    }, 3000);
+                    
+                    return false;
+                }
+                return true;
+            });
+
+            // Check enemy collisions
+            if (!gameState.invincible) {
+                gameState.enemies.forEach(enemy => {
+                    const dx = enemy.x - gameState.playerX;
+                    const dy = enemy.y - gameState.playerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 8) {
+                        createExplosion(gameState.playerX, gameState.playerY);
+                        playHitSound();
+                        gameState.lives--;
+                        
+                        if (gameState.lives <= 0) {
+                            endGame();
+                        } else {
+                            // Temporary invincibility after hit
+                            gameState.invincible = true;
+                            player.style.opacity = '0.5';
+                            setTimeout(() => {
+                                gameState.invincible = false;
+                                player.style.opacity = '1';
+                            }, 1000);
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateEnemies() {
+            gameState.enemies = gameState.enemies.filter(enemy => {
+                enemy.x += enemy.dx * gameState.level;
+                enemy.y += enemy.dy * gameState.level;
+                
+                enemy.element.style.left = enemy.x + '%';
+                enemy.element.style.top = enemy.y + '%';
+                
+                if (enemy.x < -10 || enemy.x > 110 || enemy.y < -10 || enemy.y > 110) {
+                    enemy.element.remove();
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function gameLoop() {
+            if (!gameState.running) return;
+            
+            updateEnemies();
+            checkCollisions();
+            updateUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function spawnLoop() {
+            if (!gameState.running) return;
+            
+            if (Math.random() < 0.02 + gameState.level * 0.005) {
+                spawnEnemy();
+            }
+            
+            if (Math.random() < 0.015) {
+                spawnPizza();
+            }
+            
+            if (Math.random() < 0.005) {
+                spawnPowerUp();
+            }
+            
+            setTimeout(spawnLoop, 100);
+        }
+
+        function endGame() {
+            gameState.running = false;
+            
+            // Clear all entities
+            gameState.enemies.forEach(enemy => enemy.element.remove());
+            gameState.pizzas.forEach(pizza => pizza.element.remove());
+            gameState.powerUps.forEach(powerUp => powerUp.element.remove());
+            
+            gameMessage.innerHTML = `
+                <h2>Game Over! 💥</h2>
+                <p>Your final score: ${gameState.score}</p>
+                <p>You reached level ${gameState.level}!</p>
+                <p>${gameState.score > 200 ? 'Excellent work, Space Captain! 🎉' : 
+                    gameState.score > 100 ? 'Good job, Pizza Pilot! 🍕' : 
+                    'Keep practicing, Space Cadet! 🚀'}</p>
+                <button class="start-btn" onclick="startGame()">Play Again!</button>
+            `;
+            gameMessage.style.display = 'block';
+        }
+
+        // Controls
+        document.getElementById('upBtn').addEventListener('touchstart', () => movePlayer(0, -5));
+        document.getElementById('downBtn').addEventListener('touchstart', () => movePlayer(0, 5));
+        document.getElementById('leftBtn').addEventListener('touchstart', () => movePlayer(-5, 0));
+        document.getElementById('rightBtn').addEventListener('touchstart', () => movePlayer(5, 0));
+
+        document.getElementById('upBtn').addEventListener('click', () => movePlayer(0, -5));
+        document.getElementById('downBtn').addEventListener('click', () => movePlayer(0, 5));
+        document.getElementById('leftBtn').addEventListener('click', () => movePlayer(-5, 0));
+        document.getElementById('rightBtn').addEventListener('click', () => movePlayer(5, 0));
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': e.preventDefault(); movePlayer(0, -5); break;
+                case 'ArrowDown': e.preventDefault(); movePlayer(0, 5); break;
+                case 'ArrowLeft': e.preventDefault(); movePlayer(-5, 0); break;
+                case 'ArrowRight': e.preventDefault(); movePlayer(5, 0); break;
+            }
+        });
+
+        // Touch/swipe controls
+        let touchStartX = 0, touchStartY = 0;
+        
+        gameArea.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        gameArea.addEventListener('touchend', (e) => {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+            
+            if (Math.abs(dx) > Math.abs(dy)) {
+                movePlayer(dx > 0 ? 8 : -8, 0);
+            } else {
+                movePlayer(0, dy > 0 ? 8 : -8);
+            }
+            
+            touchStartX = touchStartY = 0;
+        });
+
+        // Sound toggle
+        soundToggle.addEventListener('click', () => {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            soundToggle.textContent = gameState.soundEnabled ? '🔊' : '🔇';
+        });
+
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
