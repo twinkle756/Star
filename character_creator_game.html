@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Character Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+        }
+
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            animation: slideDown 1s ease-out;
+        }
+
+        .title {
+            color: white;
+            font-size: 2.8rem;
+            font-weight: 900;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #fff, #e0e6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .character-display {
+            background: rgba(255,255,255,0.98);
+            border-radius: 25px;
+            padding: 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: fadeIn 1.2s ease-out;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .character-display::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #667eea, #764ba2, #667eea);
+            border-radius: 25px;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .character-avatar {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: bounce 3s infinite ease-in-out;
+            border: 5px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .character-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        .character-info {
+            margin-top: 20px;
+        }
+
+        .character-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .character-class {
+            font-size: 1.2rem;
+            color: #666;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .character-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #f8f9ff, #e8edff);
+            border-radius: 15px;
+            padding: 12px;
+            text-align: center;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #667eea;
+        }
+
+        .customization-panel {
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 15px 18px;
+            border: 3px solid #e8edff;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #fff, #f8f9ff);
+            font-weight: 500;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .option-btn {
+            aspect-ratio: 1;
+            border: 3px solid #e8edff;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #fff, #f8f9ff);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.6s;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .option-btn:hover::before {
+            left: 100%;
+        }
+
+        .option-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px) scale(1.08);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .color-option {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-option::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover .color-option::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 18px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            color: #333;
+            box-shadow: 0 8px 25px rgba(255, 171, 160, 0.3);
+        }
+
+        .btn-tertiary {
+            background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+            color: white;
+            box-shadow: 0 8px 25px rgba(253, 121, 168, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.95);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1) rotate(15deg);
+            background: white;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+
+        .gallery-toggle {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.95);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .gallery-toggle:hover {
+            transform: scale(1.1);
+            background: white;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+
+        .gallery-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .gallery-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .gallery-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #333;
+            transform: scale(1.1);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .gallery-item {
+            background: linear-gradient(135deg, #f8f9ff, #e8edff);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .gallery-avatar {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .gallery-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .gallery-class {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e8edff;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .difficulty-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-8px);
+            }
+            60% {
+                transform: translateY(-4px);
+            }
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse {
+            animation: pulse 0.4s ease-in-out;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .title {
+                font-size: 2.2rem;
+            }
+            
+            .character-avatar {
+                width: 120px;
+                height: 120px;
+                font-size: 4rem;
+            }
+            
+            .option-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .sound-toggle, .gallery-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+
+            .gallery-toggle {
+                top: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+    
+    <button class="sound-toggle" id="soundToggle">🔊</button>
+    <button class="gallery-toggle" id="galleryToggle">📸</button>
+    
+    <div class="gallery-modal" id="galleryModal">
+        <div class="gallery-content">
+            <div class="gallery-header">
+                <h2 class="gallery-title">Hero Gallery</h2>
+                <button class="close-btn" id="closeGallery">&times;</button>
+            </div>
+            <div class="gallery-grid" id="galleryGrid"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">EPIC HEROES</h1>
+            <p class="subtitle">Forge legendary characters with ultimate power</p>
+        </div>
+
+        <div class="character-display">
+            <div class="character-avatar" id="characterAvatar">🧙‍♂️</div>
+            <div class="character-info">
+                <div class="character-name" id="characterName">Mysterious Hero</div>
+                <div class="character-class" id="characterClass">Arcane Wizard</div>
+                <div class="character-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Power</div>
+                        <div class="stat-value" id="powerStat">85</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Speed</div>
+                        <div class="stat-value" id="speedStat">72</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Magic</div>
+                        <div class="stat-value" id="magicStat">94</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="customization-panel">
+            <div class="section-title">⚡ Hero Details</div>
+            
+            <div class="input-group">
+                <label class="input-label">Hero Name</label>
+                <input type="text" class="text-input" id="nameInput" placeholder="Enter epic hero name..." maxlength="25">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Difficulty Level</label>
+                <div class="difficulty-selector">
+                    <button class="difficulty-btn" data-difficulty="easy">Novice</button>
+                    <button class="difficulty-btn active" data-difficulty="normal">Hero</button>
+                    <button class="difficulty-btn" data-difficulty="hard">Legend</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="customization-panel">
+            <div class="section-title">🛡️ Hero Class</div>
+            
+            <div class="option-grid">
+                <button class="option-btn active" data-class="wizard" data-emoji="🧙‍♂️">🧙‍♂️</button>
+                <button class="option-btn" data-class="warrior" data-emoji="⚔️">⚔️</button>
+                <button class="option-btn" data-class="archer" data-emoji="🏹">🏹</button>
+                <button class="option-btn" data-class="rogue" data-emoji="🗡️">🗡️</button>
+                <button class="option-btn" data-class="paladin" data-emoji="🛡️">🛡️</button>
+                <button class="option-btn" data-class="mage" data-emoji="🔮">🔮</button>
+                <button class="option-btn" data-class="druid" data-emoji="🌿">🌿</button>
+                <button class="option-btn" data-class="monk" data-emoji="👊">👊</button>
+                <button class="option-btn" data-class="necromancer" data-emoji="💀">💀</button>
+                <button class="option-btn" data-class="bard" data-emoji="🎵">🎵</button>
+                <button class="option-btn" data-class="berserker" data-emoji="🪓">🪓</button>
+                <button class="option-btn" data-class="assassin" data-emoji="🗶">🗶</button>
+            </div>
+        </div>
+
+        <div class="customization-panel">
+            <div class="section-title">🌈 Aura Color</div>
+            
+            <div class="option-grid">
+                <button class="option-btn active" data-color="#667eea">
+                    <div class="color-option" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+                </button>
+                <button class="option-btn" data-color="#ff6b6b">
+                    <div class="color-option" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);"></div>
+                </button>
+                <button class="option-btn" data-color="#4ecdc4">
+                    <div class="color-option" style="background: linear-gradient(135deg, #4ecdc4, #44a08d);"></div>
+                </button>
+                <button class="option-btn" data-color="#45b7d1">
+                    <div class="color-option" style="background: linear-gradient(135deg, #45b7d1, #2196f3);"></div>
+                </button>
+                <button class="option-btn" data-color="#f9ca24">
+                    <div class="color-option" style="background: linear-gradient(135deg, #f9ca24, #f39c12);"></div>
+                </button>
+                <button class="option-btn" data-color="#6c5ce7">
+                    <div class="color-option" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe);"></div>
+                </button>
+                <button class="option-btn" data-color="#fd79a8">
+                    <div class="color-option" style="background: linear-gradient(135deg, #fd79a8, #fdcb6e);"></div>
+                </button>
+                <button class="option-btn" data-color="#00b894">
+                    <div class="color-option" style="background: linear-gradient(135deg, #00b894, #00cec9);"></div>
+                </button>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary" id="randomizeBtn">🎲 Random</button>
+            <button class="btn btn-tertiary" id="battleBtn">⚔️ Battle</button>
+            <button class="btn btn-primary" id="saveBtn">💾 Save Hero</button>
+        </div>
+    </div>
+
+    <script>
+        class EpicCharacterCreator {
+            constructor() {
+                this.soundEnabled = true;
+                this.character = {
+                    name: 'Mysterious Hero',
+                    class: 'wizard',
+                    emoji: '🧙‍♂️',
+                    color: '#667eea',
+                    difficulty: 'normal',
+                    power: 85,
+                    speed: 72,
+                    magic: 94
+                };
+                
+                this.classes = {
+                    wizard: { name: 'Arcane Wizard', emoji: '🧙‍♂️' },
+                    warrior: { name: 'Noble Warrior', emoji: '⚔️' },
+                    archer: { name: 'Master Archer', emoji: '🏹' },
+                    rogue: { name: 'Shadow Rogue', emoji: '🗡️' },
+                    paladin: { name: 'Divine Paladin', emoji: '🛡️' },
+                    mage: { name: 'Elemental Mage', emoji: '🔮' },
+                    druid: { name: 'Nature Druid', emoji: '🌿' },
+                    monk: { name: 'Zen Monk', emoji: '👊' },
+                    necromancer: { name: 'Dark Necromancer', emoji: '💀' },
+                    bard: { name: 'Mystic Bard', emoji: '🎵' },
+                    berserker: { name: 'Fierce Berserker', emoji: '🪓' },
+                    assassin: { name: 'Silent Assassin', emoji: '🗶' }
+                };
+
+                this.colors = ['#667eea', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#fd79a8', '#00b894'];
+                
+                this.init();
+            }
+
+            init() {
+                this.createParticles();
+                this.bindEvents();
+                this.updateDisplay();
+                this.createAudioContext();
+                this.loadGallery();
+            }
+
+            createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                for (let i = 0; i < 15; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.width = (Math.random() * 4 + 2) + 'px';
+                    particle.style.height = particle.style.width;
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+
+            createAudioContext() {
+                this.audioContext = null;
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+
+            playSound(frequency = 800, duration = 100, type = 'sine', volume = 0.1) {
+                if (!this.soundEnabled || !this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+
+                gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration / 1000);
+            }
+
+            playMelody(notes, duration = 200) {
+                if (!this.soundEnabled || !this.audioContext) return;
+                
+                notes.forEach((frequency, index) => {
+                    setTimeout(() => {
+                        this.playSound(frequency, duration, 'sine', 0.08);
+                    }, index * duration * 0.8);
+                });
+            }
+
+            generateStats(className, difficulty) {
+                const baseStats = {
+                    wizard: { power: 75, speed: 60, magic: 95 },
+                    warrior: { power: 95, speed: 70, magic: 30 },
+                    archer: { power: 70, speed: 90, magic: 40 },
+                    rogue: { power: 65, speed: 95, magic: 45 },
+                    paladin: { power: 85, speed: 55, magic: 75 },
+                    mage: { power: 60, speed: 65, magic: 100 },
+                    druid: { power: 70, speed: 75, magic: 85 },
+                    monk: { power: 80, speed: 85, magic: 60 },
+                    necromancer: { power: 85, speed: 50, magic: 95 },
+                    bard: { power: 55, speed: 80, magic: 90 },
+                    berserker: { power: 100, speed: 75, magic: 25 },
+                    assassin: { power: 75, speed: 100, magic: 50 }
+                };
+
+                const multipliers = {
+                    easy: 0.8,
+                    normal: 1.0,
+                    hard: 1.2
+                };
+
+                const stats = baseStats[className];
+                const multiplier = multipliers[difficulty];
+                
+                return {
+                    power: Math.min(100, Math.round(stats.power * multiplier + (Math.random() * 10 - 5))),
+                    speed: Math.min(100, Math.round(stats.speed * multiplier + (Math.random() * 10 - 5))),
+                    magic: Math.min(100, Math.round(stats.magic * multiplier + (Math.random() * 10 - 5)))
+                };
+            }
+
+            bindEvents() {
+                // Name input
+                document.getElementById('nameInput').addEventListener('input', (e) => {
+                    this.character.name = e.target.value || 'Mysterious Hero';
+                    this.updateDisplay();
+                    this.playSound(600, 50);
+                });
+
+                // Difficulty selection
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        this.character.difficulty = btn.dataset.difficulty;
+                        const stats = this.generateStats(this.character.class, this.character.difficulty);
+                        this.character = { ...this.character, ...stats };
+                        this.updateDisplay();
+                        this.playSound(900, 120);
+                    });
+                });
+
+                // Class selection
+                document.querySelectorAll('[data-class]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-class]').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        this.character.class = btn.dataset.class;
+                        this.character.emoji = btn.dataset.emoji;
+                        const stats = this.generateStats(this.character.class, this.character.difficulty);
+                        this.character = { ...this.character, ...stats };
+                        this.updateDisplay();
+                        this.playMelody([800, 1000, 1200], 150);
+                        this.addPulse(document.getElementById('characterAvatar'));
+                    });
+                });
+
+                // Color selection
+                document.querySelectorAll('[data-color]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-color]').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        this.character.color = btn.dataset.color;
+                        this.updateDisplay();
+                        this.playSound(1000, 100);
+                    });
+                });
+
+                // Action buttons
+                document.getElementById('randomizeBtn').addEventListener('click', () => {
+                    this.randomizeCharacter();
+                    this.playMelody([400, 600, 800, 1000], 120);
+                });
+
+                document.getElementById('battleBtn').addEventListener('click', () => {
+                    this.startBattle();
+                    this.playMelody([1200, 1000, 800, 1000, 1200], 100);
+                });
+
+                document.getElementById('saveBtn').addEventListener('click', () => {
+                    this.saveCharacter();
+                    this.playMelody([800, 1000, 1200, 1400], 150);
+                });
+
+                // Sound toggle
+                document.getElementById('soundToggle').addEventListener('click', () => {
+                    this.toggleSound();
+                });
+
+                // Gallery toggle
+                document.getElementById('galleryToggle').addEventListener('click', () => {
+                    this.showGallery();
+                });
+
+                document.getElementById('closeGallery').addEventListener('click', () => {
+                    this.hideGallery();
+                });
+
+                // Gallery modal click outside to close
+                document.getElementById('galleryModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'galleryModal') {
+                        this.hideGallery();
+                    }
+                });
+
+                // Enable audio context on first user interaction
+                document.addEventListener('click', () => {
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+                }, { once: true });
+            }
+
+            updateDisplay() {
+                const avatar = document.getElementById('characterAvatar');
+                const name = document.getElementById('characterName');
+                const className = document.getElementById('characterClass');
+                const nameInput = document.getElementById('nameInput');
+                const powerStat = document.getElementById('powerStat');
+                const speedStat = document.getElementById('speedStat');
+                const magicStat = document.getElementById('magicStat');
+
+                avatar.textContent = this.character.emoji;
+                avatar.style.background = `linear-gradient(135deg, ${this.character.color}, ${this.character.color}88)`;
+                avatar.style.borderColor = this.character.color;
+                
+                name.textContent = this.character.name;
+                className.textContent = this.classes[this.character.class].name;
+                nameInput.value = this.character.name === 'Mysterious Hero' ? '' : this.character.name;
+                
+                powerStat.textContent = this.character.power;
+                speedStat.textContent = this.character.speed;
+                magicStat.textContent = this.character.magic;
+            }
+
+            randomizeCharacter() {
+                const classKeys = Object.keys(this.classes);
+                const randomClass = classKeys[Math.floor(Math.random() * classKeys.length)];
+                const randomColor = this.colors[Math.floor(Math.random() * this.colors.length)];
+                const difficulties = ['easy', 'normal', 'hard'];
+                const randomDifficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
+                
+                const epicNames = [
+                    'Shadowstrike', 'Flameheart', 'Stormbringer', 'Nightwhisper',
+                    'Ironwill', 'Starblade', 'Thunderfist', 'Moonweaver',
+                    'Frostborn', 'Dragonbane', 'Soulrender', 'Voidwalker',
+                    'Lightbringer', 'Bloodthorne', 'Mistral', 'Emberstorm',
+                    'Crystalline', 'Ravenclaw', 'Goldenheart', 'Shadowmere'
+                ];
+                const randomName = epicNames[Math.floor(Math.random() * epicNames.length)];
+
+                this.character.name = randomName;
+                this.character.class = randomClass;
+                this.character.emoji = this.classes[randomClass].emoji;
+                this.character.color = randomColor;
+                this.character.difficulty = randomDifficulty;
+                
+                const stats = this.generateStats(randomClass, randomDifficulty);
+                this.character = { ...this.character, ...stats };
+
+                // Update active buttons
+                document.querySelectorAll('[data-class]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.class === randomClass);
+                });
+
+                document.querySelectorAll('[data-color]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.color === randomColor);
+                });
+
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.difficulty === randomDifficulty);
+                });
+
+                this.updateDisplay();
+                this.addPulse(document.getElementById('characterAvatar'));
+            }
+
+            startBattle() {
+                const battleResults = [
+                    'Victory! Your hero defeated the Shadow Dragon!',
+                    'Epic battle! You conquered the Crystal Fortress!',
+                    'Legendary! Your hero vanquished the Dark Lord!',
+                    'Amazing! You cleared the Dungeon of Eternal Darkness!',
+                    'Incredible! Your hero saved the Mystical Kingdom!',
+                    'Outstanding! You defeated the Ancient Lich King!'
+                ];
+                
+                const result = battleResults[Math.floor(Math.random() * battleResults.length)];
+                
+                // Show battle result
+                const saveBtn = document.getElementById('saveBtn');
+                const originalText = saveBtn.textContent;
+                saveBtn.textContent = '🏆 ' + result.split('!')[0] + '!';
+                saveBtn.style.background = 'linear-gradient(135deg, #00b894, #00cec9)';
+                
+                setTimeout(() => {
+                    saveBtn.textContent = originalText;
+                    saveBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                }, 4000);
+
+                this.addPulse(saveBtn);
+            }
+
+            saveCharacter() {
+                const character = {
+                    ...this.character,
+                    createdAt: new Date().toISOString(),
+                    id: Date.now()
+                };
+
+                // Save to localStorage
+                const savedCharacters = JSON.parse(localStorage.getItem('savedCharacters') || '[]');
+                savedCharacters.push(character);
+                localStorage.setItem('savedCharacters', JSON.stringify(savedCharacters));
+
+                // Show success feedback
+                const saveBtn = document.getElementById('saveBtn');
+                const originalText = saveBtn.textContent;
+                saveBtn.textContent = '✅ Hero Saved!';
+                saveBtn.style.background = 'linear-gradient(135deg, #00b894, #00cec9)';
+                
+                setTimeout(() => {
+                    saveBtn.textContent = originalText;
+                    saveBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                }, 2000);
+
+                this.addPulse(saveBtn);
+                this.loadGallery(); // Refresh gallery
+            }
+
+            loadGallery() {
+                const savedCharacters = JSON.parse(localStorage.getItem('savedCharacters') || '[]');
+                const galleryGrid = document.getElementById('galleryGrid');
+                
+                if (savedCharacters.length === 0) {
+                    galleryGrid.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1/-1;">No heroes saved yet. Create and save your first hero!</p>';
+                    return;
+                }
+
+                galleryGrid.innerHTML = savedCharacters.map(character => `
+                    <div class="gallery-item" onclick="characterCreator.loadCharacter(${character.id})">
+                        <div class="gallery-avatar" style="color: ${character.color}">${character.emoji}</div>
+                        <div class="gallery-name">${character.name}</div>
+                        <div class="gallery-class">${this.classes[character.class].name}</div>
+                    </div>
+                `).join('');
+            }
+
+            loadCharacter(id) {
+                const savedCharacters = JSON.parse(localStorage.getItem('savedCharacters') || '[]');
+                const character = savedCharacters.find(c => c.id === id);
+                
+                if (character) {
+                    this.character = { ...character };
+                    
+                    // Update active buttons
+                    document.querySelectorAll('[data-class]').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.class === character.class);
+                    });
+
+                    document.querySelectorAll('[data-color]').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.color === character.color);
+                    });
+
+                    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.difficulty === character.difficulty);
+                    });
+
+                    this.updateDisplay();
+                    this.hideGallery();
+                    this.playMelody([800, 1000, 1200], 150);
+                    this.addPulse(document.getElementById('characterAvatar'));
+                }
+            }
+
+            showGallery() {
+                document.getElementById('galleryModal').style.display = 'flex';
+                this.playSound(800, 100);
+            }
+
+            hideGallery() {
+                document.getElementById('galleryModal').style.display = 'none';
+                this.playSound(600, 100);
+            }
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const soundBtn = document.getElementById('soundToggle');
+                soundBtn.textContent = this.soundEnabled ? '🔊' : '🔇';
+                
+                if (this.soundEnabled) {
+                    this.playSound(800, 100);
+                }
+            }
+
+            addPulse(element) {
+                element.classList.remove('pulse');
+                setTimeout(() => element.classList.add('pulse'), 10);
+                setTimeout(() => element.classList.remove('pulse'), 410);
+            }
+        }
+
+        // Initialize the game when the page loads
+        let characterCreator;
+        document.addEventListener('DOMContentLoaded', () => {
+            characterCreator = new EpicCharacterCreator();
+        });
+
+        // Add some mobile-specific touch enhancements
+        document.addEventListener('touchstart', function() {}, { passive: true });
+        
+        // Prevent zoom on double tap for mobile
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
